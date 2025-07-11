@@ -1,0 +1,56 @@
+version: 0.0.1
+description: TabDPT
+seed: 42
+exp_name: "default"
+folder: "default"
+exp_path: ''
+
+env:
+  device: 'cuda:0'
+  gpus: [0, 1]
+  num_workers: 32
+
+model:
+  emsize: 512
+  max_num_classes: 10
+  max_num_features: 100
+  # number of heads in the transformer, 8 worked slightly better than 4
+  nhead: 8
+  nhid_factor: 2
+  nlayers: 12
+
+
+training:
+  num_epochs: 2048
+  num_model_updates: 128
+  num_agg: 1 # gradient aggreation steps: to be adjusted based on the number of gpus
+  batch_size: 256 # to be adjusted based on the number of gpus
+  lr: 0.0005
+  weight_decay: 0.05
+  dropout: 0.0
+  # minimum number of elements in the context: too low means lots of noise, too high means we never see small contexts
+  min_eval_pos: 50
+  # maximum number of elements in the context
+  max_eval_pos: 1024
+  # Fixed size sequence length. Number of queries if seq_len - max_eval_pos
+  # ensure seq_len >= max_eval_pos + constant where constant is the minimum number of queries
+  # Too small also means a lot of noise
+  seq_len: 1536
+  # seq len for eval
+  eval_seq_len: 1024
+  label_smoothing: 0.1
+  reset_policy: 'rm' # reset policy: 'rm' for remove, 'cnt' for continue
+  compile: true
+  clip_grad_norm: 1
+
+data:
+  y_reg_augment: true
+  # retreival during training
+  retrieval: true
+  # retrieval during eval: this may take more memory than the training, be careful with memory
+  eval_retrieval: true
+
+logging:
+  eval_every: 10
+  save_metrics:
+    - valid_agg
