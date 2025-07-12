@@ -9,7 +9,7 @@
 
 **TabDPT** is an open-source foundation model for tabular data based on in-context learning. It is trained on real-world data and can generalize to new tasks **without** additional training or hyperparameter tuning.
 
-This repository provides the full training code to build your own TabDPT model. A lightweight inference interface is available [here](https://github.com/layer6ai-labs/TabDPT), which can support the evaluation of either the existing TabDPT model or any new models that are trained using this repository.
+This repository provides the full training code to build your own TabDPT model. A lightweight inference interface is available [here](https://github.com/layer6ai-labs/TabDPT-inference), which can support the evaluation of either the existing TabDPT model or any new models that are trained using this repository.
 
 
 ## Usage 
@@ -37,7 +37,7 @@ sudo apt-get install build-essential
 To train a fresh TabDPT model with default hyperparameters on a single GPU, use the following command:
 
 ```
-python train.py exp_name="TabDPT"
+CUDA_VISIBLE_DEVICES=0 python train.py exp_name="TabDPT"
 ```
 
 #### Multi GPU Training Example
