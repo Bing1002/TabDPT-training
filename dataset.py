@@ -58,6 +58,7 @@ class FullDataset(Dataset):
         )
         self.datasets = defaultdict(dict)
 
+        self.dataset_ids = self.dataset_ids[0:4]
         # Load datasets and preprocess them
         for did in tqdm(self.dataset_ids):
             # download the dataset from OpenML

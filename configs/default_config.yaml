@@ -7,24 +7,24 @@ exp_path: ''
 
 env:
   device: 'cuda:0'
-  gpus: [0, 1]
-  num_workers: 32
+  gpus: [0]
+  num_workers: 4
 
 model:
   emsize: 512
   max_num_classes: 10
   max_num_features: 100
   # number of heads in the transformer, 8 worked slightly better than 4
-  nhead: 8
+  nhead: 2
   nhid_factor: 2
-  nlayers: 12
+  nlayers: 2
 
 
 training:
   num_epochs: 2048
   num_model_updates: 128
   num_agg: 1 # gradient aggreation steps: to be adjusted based on the number of gpus
-  batch_size: 256 # to be adjusted based on the number of gpus
+  batch_size: 4 # to be adjusted based on the number of gpus
   lr: 0.0005
   weight_decay: 0.05
   dropout: 0.0
@@ -40,7 +40,7 @@ training:
   eval_seq_len: 1024
   label_smoothing: 0.1
   reset_policy: 'rm' # reset policy: 'rm' for remove, 'cnt' for continue
-  compile: true
+  compile: false
   clip_grad_norm: 1
 
 data:
@@ -48,7 +48,7 @@ data:
   # retreival during training
   retrieval: true
   # retrieval during eval: this may take more memory than the training, be careful with memory
-  eval_retrieval: true
+  eval_retrieval: false
 
 logging:
   eval_every: 10

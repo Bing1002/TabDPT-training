@@ -266,13 +266,13 @@ def main(config: DictConfig):
 
     # set validation datasets
     # TODO : make this configurable
-    vals = [
-        FullEval(
-            device=device,
-            max_feat=config.model.max_num_features,
-            use_retrieval=config.data.eval_retrieval,
-        )
-    ]
+    # vals = [
+    #     FullEval(
+    #         device=device,
+    #         max_feat=config.model.max_num_features,
+    #         use_retrieval=config.data.eval_retrieval,
+    #     )
+    # ]
 
     # select the device type
     device_type = "cpu" if config.env.device == "cpu" else "cuda"
@@ -315,7 +315,8 @@ def main(config: DictConfig):
         for batch in tqdm(range(config.training.num_model_updates * config.training.num_agg)):
             # randomly set the evaluation position, i.e. the context length
                 # ---- 1. choose a common eval_pos ---------------------------------------
-            if dist.get_rank() == 0:
+            # if dist.get_rank() == 0:
+            if not dist.is_available() or not dist.is_initialized() or dist.get_rank() == 0:
                 eval_pos_t = torch.randint(
                     config.training.min_eval_pos,
                     config.training.max_eval_pos + 1,
@@ -326,7 +327,8 @@ def main(config: DictConfig):
             else:
                 eval_pos_t = torch.empty(1, dtype=torch.long, device=device)
 
-            dist.broadcast(eval_pos_t, src=0)
+            if dist.is_available() and dist.is_initialized():
+                dist.broadcast(eval_pos_t, src=0)
             eval_pos = int(eval_pos_t.item())
             # eval_pos = random.randint(config.training.min_eval_pos, config.training.max_eval_pos)
 
@@ -334,16 +336,16 @@ def main(config: DictConfig):
             x, y, task = [a.to(device) for a in next(iter_data_loader)]
 
             # efficient forward pass and loss computation
-            with selected_autocast, sdpa_kernel(SDPBackend.FLASH_ATTENTION):
-                output, log_act_norms = model(
-                    x, y.squeeze(-1)[:eval_pos], return_log_act_norms=True
-                )
+            # with selected_autocast, sdpa_kernel(SDPBackend.FLASH_ATTENTION):
+            output, log_act_norms = model(
+                x, y.squeeze(-1)[:eval_pos], return_log_act_norms=True
+            )
 
-                # compute the losses
-                loss_cls, loss_reg = compute_losses(output, task, y.squeeze(-1)[eval_pos:], config)
+            # compute the losses
+            loss_cls, loss_reg = compute_losses(output, task, y.squeeze(-1)[eval_pos:], config)
 
-                # reweight the loss for combined classification and regression tasks
-                loss = get_combined_loss(loss_cls, loss_reg, task, config)
+            # reweight the loss for combined classification and regression tasks
+            loss = get_combined_loss(loss_cls, loss_reg, task, config)
 
             # detach the log_act_norms to avoid memory leak
             log_act_norms = {k: v.detach().item() for k, v in log_act_norms.items()}
